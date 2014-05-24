@@ -8,8 +8,10 @@ import httplib
 num_threads = 4
 queue = Queue()
 results = {}
-reportto = "tkkrnet.vuurrosmedia.nl"
-ips = ["google.com", "10.0.1.3", "10.0.1.11", "10.0.1.51"]
+
+reportto = "tkkrnet.vuurrosmedia.nl:80"
+reporturl = "/index.php/graphit/logit"
+ips = ["www.google.com", "10.42.2.252", "10.42.3.101", "10.42.3.102", "10.42.3.103", "10.42.3.104","10.42.3.105","10.42.3.106","10.42.3.107","10.42.3.108","10.42.3.109"]
 #wraps system ping command
 def pinger(r, q):
     """Pings subnet"""
@@ -18,13 +20,20 @@ def pinger(r, q):
         # print "Pinging %s" %  ip
         ret = subprocess.Popen(["ping", "-c 3" , "-q",  ip], stdout=subprocess.PIPE)
         splitted = ret.communicate()[0].split('\n')
-        lastsplit =  splitted[3].split(' ')
-        if lastsplit[0].strip() == lastsplit[3].strip():
-            data = {'message':str(ip)+': alive','milis':lastsplit[9].strip()}
-            r[ip] = data
+        #lastsplit = splitted[4].split(' ')
+	#print splitted[4].split(' ')[3]
+        
+	if splitted[4] is not None:
+            if lastsplit[0].strip() == lastsplit[3].strip():
+                lastsplit = splitted[4].split(' ')
+                data = {'name':'tkkrlab','slug':'tkkrlab',ip:lastsplit[9].strip()}
+                r.update(data);
+            else:
+               data = {'name':'tkkrlab','slug':'tkkrlab',ip:'9999ms'}
+               r.update(data);
         else:
-            data = {'message':'%s: down' % ip}
-            r[ip] = data
+            data = {'name':'tkkrlab','slug':'tkkrlab',ip:'9999ms'}
+            r.update(data);
         q.task_done()
 #Spawn thread pool
 for i in ips:
@@ -39,9 +48,9 @@ queue.join()
 
 encoded = urllib.urlencode(results)
 
-h = httplib.HTTPConnection('pyrotest:80')
+h = httplib.HTTPConnection(reportto)
 headers = {"Content-type": "application/x-www-form-urlencoded", "Accept": "text/plain"}
-h.request('POST', '/index.php/periods/logit', encoded, headers)
+h.request('POST', reporturl, encoded, headers)
 r = h.getresponse()
 
 print r.read()
