@@ -20,19 +20,13 @@ def pinger(r, q):
         # print "Pinging %s" %  ip
         ret = subprocess.Popen(["ping", "-c 3" , "-q",  ip], stdout=subprocess.PIPE)
         splitted = ret.communicate()[0].split('\n')
-        #lastsplit = splitted[4].split(' ')
-	#print splitted[4].split(' ')[3]
         
-	if splitted[4] is not None:
-            if lastsplit[0].strip() == lastsplit[3].strip():
-                lastsplit = splitted[4].split(' ')
-                data = {'name':'tkkrlab','slug':'tkkrlab',ip:lastsplit[9].strip()}
-                r.update(data);
-            else:
-               data = {'name':'tkkrlab','slug':'tkkrlab',ip:'9999ms'}
-               r.update(data);
+	if splitted[4] is not '':
+            lastsplit = splitted[4].split(' ')                
+            data = {'name':'tkkrlab','slug':'tkkrlab',ip:lastsplit[3].split('/')[1].strip()}
+            r.update(data);
         else:
-            data = {'name':'tkkrlab','slug':'tkkrlab',ip:'9999ms'}
+            data = {'name':'tkkrlab','slug':'tkkrlab',ip:'999'}
             r.update(data);
         q.task_done()
 #Spawn thread pool
@@ -45,7 +39,7 @@ for ip in ips:
     queue.put(ip)
 #Wait until worker threads are done to exit    
 queue.join()
-
+print results
 encoded = urllib.urlencode(results)
 
 h = httplib.HTTPConnection(reportto)
